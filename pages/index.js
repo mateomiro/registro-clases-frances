@@ -1,79 +1,66 @@
 import React, { useState } from 'react';
-import { Clock, Trash2, Edit, X, Check } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 export default function Home() {
   const [registros, setRegistros] = useState([]);
   const [cargando, setCargando] = useState(false);
-  const [editando, setEditando] = useState(null);
-  const [mensaje, setMensaje] = useState(null);
 
-  // ... mantén la constante estudiantes igual ...
+  const estudiantes = [
+    {
+      nombre: "Katharina",
+      horario: "09:00",
+      dia: "Miércoles",
+      duracion: 60,
+      tarifa: 20
+    },
+    {
+      nombre: "Toni",
+      horario: "10:00",
+      dia: "Miércoles",
+      duracion: 60,
+      tarifa: 20
+    }
+  ];
 
   async function registrarClase(estudiante) {
-    // ... mantén la función registrarClase igual ...
-  }
-
-  async function eliminarRegistro(registro) {
-    if (!confirm('¿Estás seguro de eliminar esta clase?')) return;
-
+    setCargando(true);
+    const fecha = new Date().toLocaleDateString();
+    
     try {
-      const response = await fetch('/api/eliminar-clase', {
-        method: 'DELETE',
+      const response = await fetch('/api/registrar-clase', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          fecha: registro.fecha,
-          estudiante: registro.estudiante
+          estudiante: estudiante.nombre,
+          fecha: fecha,
+          hora: estudiante.horario,
+          duracion: estudiante.duracion,
+          tarifa: estudiante.tarifa
         }),
       });
 
-      if (!response.ok) throw new Error('Error al eliminar la clase');
+      if (!response.ok) throw new Error('Error al registrar la clase');
 
-      setRegistros(registros.filter(r => r.id !== registro.id));
-      setMensaje({ tipo: 'exito', texto: '✅ Clase eliminada correctamente' });
-    } catch (error) {
-      setMensaje({ tipo: 'error', texto: '❌ ' + error.message });
-    }
-  }
-
-  function iniciarEdicion(registro) {
-    setEditando({
-      ...registro,
-      fechaTemp: registro.fecha,
-      horaTemp: registro.hora
-    });
-  }
-
-  async function guardarEdicion() {
-    try {
-      const response = await fetch('/api/editar-clase', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
+      setRegistros([
+        {
+          id: Date.now(),
+          estudiante: estudiante.nombre,
+          fecha,
+          hora: estudiante.horario,
+          duracion: estudiante.duracion,
+          tarifa: estudiante.tarifa
         },
-        body: JSON.stringify({
-          id: editando.id,
-          estudiante: editando.estudiante,
-          fechaOriginal: editando.fecha,
-          horaOriginal: editando.hora,
-          fechaNueva: editando.fechaTemp,
-          horaNueva: editando.horaTemp
-        }),
-      });
+        ...registros
+      ]);
 
-      if (!response.ok) throw new Error('Error al editar la clase');
-
-      setRegistros(registros.map(registro =>
-        registro.id === editando.id
-          ? { ...registro, fecha: editando.fechaTemp, hora: editando.horaTemp }
-          : registro
-      ));
-
-      setMensaje({ tipo: 'exito', texto: '✅ Clase actualizada correctamente' });
-      setEditando(null);
+      alert('✅ Clase registrada correctamente');
     } catch (error) {
-      setMensaje({ tipo: 'error', texto: '❌ ' + error.message });
+      alert('❌ Error al registrar la clase');
+      console.error(error);
+    } finally {
+      setCargando(false);
     }
   }
 
@@ -82,9 +69,67 @@ export default function Home() {
       padding: '20px',
       maxWidth: '800px',
       margin: '0 auto',
-      fontFamily: 'system-ui, sans-serif'
+      fontFamily: 'system-ui, sans-serif',
+      backgroundColor: '#f5f5f5',
+      minHeight: '100vh'
     }}>
-      {/* ... mantén el código del título y las tarjetas de estudiantes igual ... */}
+      <h1 style={{
+        color: '#333',
+        textAlign: 'center',
+        marginBottom: '30px'
+      }}>
+        Registro de Clases de Francés
+      </h1>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '20px',
+        marginBottom: '30px'
+      }}>
+        {estudiantes.map((estudiante) => (
+          <div key={estudiante.nombre} style={{
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '10px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginBottom: '15px'
+            }}>
+              <div>
+                <h3 style={{ margin: '0 0 5px 0', color: '#2c5282' }}>
+                  {estudiante.nombre}
+                </h3>
+                <p style={{ margin: '0 0 5px 0', color: '#4a5568' }}>
+                  {estudiante.dia} a las {estudiante.horario}
+                </p>
+                <p style={{ margin: '0', color: '#4a5568' }}>
+                  Duración: {estudiante.duracion} min - {estudiante.tarifa}€/hora
+                </p>
+              </div>
+              <Clock style={{ color: '#718096' }} />
+            </div>
+            <button
+              onClick={() => registrarClase(estudiante)}
+              disabled={cargando}
+              style={{
+                width: '100%',
+                padding: '10px',
+                backgroundColor: cargando ? '#90cdf4' : '#4299e1',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: cargando ? 'default' : 'pointer'
+              }}
+            >
+              {cargando ? '⏳ Registrando...' : '✏️ Registrar Clase'}
+            </button>
+          </div>
+        ))}
+      </div>
 
       <div style={{
         backgroundColor: 'white',
@@ -92,7 +137,10 @@ export default function Home() {
         borderRadius: '10px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
-        <h2 style={{ margin: '0 0 20px 0', color: '#2c5282' }}>
+        <h2 style={{
+          margin: '0 0 20px 0',
+          color: '#2c5282'
+        }}>
           Últimas Clases Registradas
         </h2>
         {registros.length === 0 ? (
@@ -105,140 +153,19 @@ export default function Home() {
               <div key={registro.id} style={{
                 padding: '15px',
                 backgroundColor: '#f7fafc',
-                borderRadius: '5px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
+                borderRadius: '5px'
               }}>
-                {editando?.id === registro.id ? (
-                  <div style={{ width: '100%' }}>
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: '10px',
-                      marginBottom: '10px'
-                    }}>
-                      <input
-                        type="date"
-                        value={editando.fechaTemp}
-                        onChange={(e) => setEditando({
-                          ...editando,
-                          fechaTemp: e.target.value
-                        })}
-                        style={{
-                          padding: '5px',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '5px'
-                        }}
-                      />
-                      <input
-                        type="time"
-                        value={editando.horaTemp}
-                        onChange={(e) => setEditando({
-                          ...editando,
-                          horaTemp: e.target.value
-                        })}
-                        style={{
-                          padding: '5px',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '5px'
-                        }}
-                      />
-                    </div>
-                    <div style={{
-                      display: 'flex',
-                      gap: '10px',
-                      justifyContent: 'flex-end'
-                    }}>
-                      <button
-                        onClick={() => setEditando(null)}
-                        style={{
-                          padding: '5px 10px',
-                          backgroundColor: '#cbd5e0',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '5px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <X size={16} />
-                      </button>
-                      <button
-                        onClick={guardarEdicion}
-                        style={{
-                          padding: '5px 10px',
-                          backgroundColor: '#48bb78',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '5px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <Check size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div>
-                      <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>
-                        {registro.estudiante}
-                      </p>
-                      <p style={{ margin: '0', color: '#4a5568' }}>
-                        {registro.fecha} a las {registro.hora} - {registro.duracion} min ({registro.tarifa}€/hora)
-                      </p>
-                    </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button
-                        onClick={() => iniciarEdicion(registro)}
-                        style={{
-                          padding: '5px 10px',
-                          backgroundColor: '#4299e1',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '5px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button
-                        onClick={() => eliminarRegistro(registro)}
-                        style={{
-                          padding: '5px 10px',
-                          backgroundColor: '#fc8181',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '5px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </>
-                )}
+                <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>
+                  {registro.estudiante}
+                </p>
+                <p style={{ margin: '0', color: '#4a5568' }}>
+                  {registro.fecha} a las {registro.hora} - {registro.duracion} min ({registro.tarifa}€/hora)
+                </p>
               </div>
             ))}
           </div>
         )}
       </div>
-
-      {mensaje && (
-        <div style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          padding: '10px 20px',
-          backgroundColor: mensaje.tipo === 'error' ? '#fc8181' : '#68d391',
-          color: 'white',
-          borderRadius: '5px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          {mensaje.texto}
-        </div>
-      )}
     </div>
   );
 }
-
