@@ -191,63 +191,36 @@ export default function Home() {
     }
   }
 
-  async function guardarEdicion() {
-    if (!editando) {
-      console.error('No hay datos de edición');
-      return;
-    }
+  async function guardarEdicion(registro) {
+  try {
+    const [dia, mes, año] = nuevaFecha.split('/');
+    const fechaNuevaFormateada = `${año}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`; // Asegura que sea "yyyy-MM-dd"
 
-    try {
-      const [año, mes, dia] = editando.fechaTemp.split('-');
-      const fechaNuevaFormateada = `${dia}/${mes}/${año}`;
-
-      console.log('Enviando edición:', {
-        estudiante: editando.estudiante,
-        fechaOriginal: editando.fecha,
-        horaOriginal: editando.hora,
+    const response = await fetch('/api/editar-clase', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        estudiante: registro.estudiante,
+        fechaOriginal: registro.fecha,
+        horaOriginal: registro.hora,
         fechaNueva: fechaNuevaFormateada,
-        horaNueva: editando.horaTemp
-      });
+        horaNueva: nuevaHora,
+      }),
+    });
 
-      const response = await fetch('/api/editar-clase', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          estudiante: editando.estudiante,
-          fechaOriginal: editando.fecha,
-          horaOriginal: editando.hora,
-          fechaNueva: fechaNuevaFormateada,
-          horaNueva: editando.horaTemp
-        }),
-      });
+    if (!response.ok) throw new Error('Error al editar la clase');
 
-      const data = await response.json();
-      
-      if (!response.ok) {
-        console.error('Respuesta del servidor:', data);
-        throw new Error(data.error || 'Error al editar la clase');
-      }
-
-      setRegistros(registros.map(registro =>
-        registro.id === editando.id
-          ? { 
-              ...registro, 
-              fecha: fechaNuevaFormateada, 
-              hora: editando.horaTemp 
-            }
-          : registro
-      ));
-
-      alert('✅ Clase actualizada correctamente');
-      setEditando(null);
-    } catch (error) {
-      console.error('Error al guardar edición:', error);
-      alert('❌ Error al editar la clase: ' + error.message);
-    }
+    setRegistros(registros.map(r => r.id === registro.id ? { ...r, fecha: fechaNuevaFormateada, hora: nuevaHora } : r));
+    setEditando(null);
+    alert('✅ Clase actualizada correctamente');
+  } catch (error) {
+    alert('❌ Error al editar la clase');
+    console.error(error);
   }
-
+}
+  
   return (
     <div style={{
       padding: '20px',
