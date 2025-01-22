@@ -64,6 +64,31 @@ export default function Home() {
     }
   }
 
+  async function eliminarRegistro(registro) {
+    if (!confirm('¿Estás seguro de eliminar esta clase?')) return;
+
+    try {
+      const response = await fetch('/api/eliminar-clase', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fecha: registro.fecha,
+          estudiante: registro.estudiante
+        }),
+      });
+
+      if (!response.ok) throw new Error('Error al eliminar la clase');
+
+      setRegistros(registros.filter(r => r.id !== registro.id));
+      alert('✅ Clase eliminada correctamente');
+    } catch (error) {
+      alert('❌ Error al eliminar la clase');
+      console.error(error);
+    }
+  }
+
   return (
     <div style={{
       padding: '20px',
@@ -149,37 +174,43 @@ export default function Home() {
           </p>
         ) : (
           <div style={{ display: 'grid', gap: '10px' }}>
-          {registros.map(registro => (
-  <div key={registro.id} style={{
-    padding: '15px',
-    backgroundColor: '#f7fafc',
-    borderRadius: '5px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  }}>
-    <div>
-      <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>
-        {registro.estudiante}
-      </p>
-      <p style={{ margin: '0', color: '#4a5568' }}>
-        {registro.fecha} a las {registro.hora} - {registro.duracion} min ({registro.tarifa}€/hora)
-      </p>
+            {registros.map(registro => (
+              <div key={registro.id} style={{
+                padding: '15px',
+                backgroundColor: '#f7fafc',
+                borderRadius: '5px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div>
+                  <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>
+                    {registro.estudiante}
+                  </p>
+                  <p style={{ margin: '0', color: '#4a5568' }}>
+                    {registro.fecha} a las {registro.hora} - {registro.duracion} min ({registro.tarifa}€/hora)
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => eliminarRegistro(registro)}
+                    style={{
+                      padding: '5px 10px',
+                      backgroundColor: '#fc8181',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
-    <div style={{ display: 'flex', gap: '10px' }}>
-      <button
-        onClick={() => eliminarRegistro(registro)}
-        style={{
-          padding: '5px 10px',
-          backgroundColor: '#fc8181',
-          color: 'white',
-          border: 'none',
-          borderRadius: '5px',
-          cursor: 'pointer'
-        }}
-      >
-        🗑️
-      </button>
-    </div>
-  </div>
-))}
+  );
+}
