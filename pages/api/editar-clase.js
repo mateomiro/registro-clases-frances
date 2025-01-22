@@ -8,9 +8,9 @@ export default async function handler(req, res) {
   try {
     const { estudiante, fechaOriginal, horaOriginal, fechaNueva, horaNueva } = req.body;
 
-    console.log('Buscando clase:', {
+    console.log('Buscando:', {
       estudiante,
-      fechaOriginal,
+      fechaOriginal, // formato "DD/M/YYYY"
       horaOriginal
     });
 
@@ -28,28 +28,18 @@ export default async function handler(req, res) {
     });
 
     const rows = response.data.values || [];
-    
-    // Encontrar la fila exacta
+    console.log('Filas encontradas:', rows);
+
+    // Encontrar la fila que coincida exactamente
     const rowIndex = rows.findIndex(row => {
-      console.log('Comparando:', {
-        hoja: {
-          estudiante: row[0],
-          fecha: row[1],
-          hora: row[2]
-        },
-        busqueda: {
-          estudiante,
-          fecha: fechaOriginal,
-          hora: horaOriginal
-        }
-      });
       return row[0] === estudiante && 
              row[1] === fechaOriginal && 
              row[2] === horaOriginal;
     });
 
+    console.log('Índice de fila encontrado:', rowIndex);
+
     if (rowIndex === -1) {
-      console.error('No se encontró la clase. Datos disponibles:', rows);
       throw new Error('No se encontró la clase especificada');
     }
 
@@ -79,4 +69,3 @@ export default async function handler(req, res) {
     });
   }
 }
-
