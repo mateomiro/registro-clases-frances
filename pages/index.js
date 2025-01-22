@@ -92,25 +92,72 @@ export default function Home() {
     }
   }
 
-  function iniciarEdicion(registro) {
-    setEditando(registro.id);
-    setNuevaFecha(registro.fecha);
-    setNuevaHora(registro.hora);
-  }
-
-  async function guardarEdicion() {
+function iniciarEdicion(registro) {
+  // Convertir la fecha de "DD/MM/YYYY" a "YYYY-MM-DD" para el input date
+  const [dia, mes, año] = registro.fecha.split('/');
+  const fechaFormateada = `${año}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+  
+  setEditando({
+    ...registro,
+    fechaTemp: fechaFormateada,
+    horaTemp: registro.hora
+  });
+}
+ async function guardarEdicion() {
   try {
-    // Convertir la fecha al formato correcto
-    const fechaOriginal = editando.fecha;
-    const horaOriginal = editando.hora;
-    
-    console.log('Enviando edición:', {
+    // Convertir la fecha de YYYY-MM-DD a DD/MM/YYYY para mantener consistencia
+    const [año, mes, dia] = editando.fechaTemp.split('-');
+    const fechaNuevaFormateada = `${dia}/${mes}/${año}`;
+
+    console.log('Datos originales:', {
       estudiante: editando.estudiante,
-      fechaOriginal,
-      horaOriginal,
-      fechaNueva: editando.fechaTemp,
+      fechaOriginal: editando.fecha,
+      horaOriginal: editando.hora
+    });
+
+    console.log('Datos nuevos:', {
+      fechaNueva: fechaNuevaFormateada,
       horaNueva: editando.horaTemp
     });
+
+    const response = await fetch('/api/editar-clase', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        estudiante: editando.estudiante,
+        fechaOriginal: editando.fecha,
+        horaOriginal: editando.hora,
+        fechaNueva: fechaNuevaFormateada,
+        horaNueva: editando.horaTemp
+      }),
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      console.error('Respuesta del servidor:', data);
+      throw new Error(data.error || 'Error al editar la clase');
+    }
+
+    setRegistros(registros.map(registro =>
+      registro.id === editando.id
+        ? { 
+            ...registro, 
+            fecha: fechaNuevaFormateada, 
+            hora: editando.horaTemp 
+          }
+        : registro
+    ));
+
+    alert('✅ Clase actualizada correctamente');
+    setEditando(null);
+  } catch (error) {
+    alert('❌ Error al editar la clase: ' + error.message);
+    console.error('Error completo:', error);
+  }
+}
 
     const response = await fetch('/api/editar-clase', {
       method: 'PUT',
