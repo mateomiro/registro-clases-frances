@@ -98,30 +98,57 @@ export default function Home() {
     setNuevaHora(registro.hora);
   }
 
-  async function guardarEdicion(registro) {
-    try {
-      const response = await fetch('/api/editar-clase', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: registro.id,
-          nuevaFecha,
-          nuevaHora
-        }),
-      });
+  async function guardarEdicion() {
+  try {
+    // Convertir la fecha al formato correcto
+    const fechaOriginal = editando.fecha;
+    const horaOriginal = editando.hora;
+    
+    console.log('Enviando edición:', {
+      estudiante: editando.estudiante,
+      fechaOriginal,
+      horaOriginal,
+      fechaNueva: editando.fechaTemp,
+      horaNueva: editando.horaTemp
+    });
 
-      if (!response.ok) throw new Error('Error al editar la clase');
+    const response = await fetch('/api/editar-clase', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        estudiante: editando.estudiante,
+        fechaOriginal,
+        horaOriginal,
+        fechaNueva: editando.fechaTemp,
+        horaNueva: editando.horaTemp
+      }),
+    });
 
-      setRegistros(registros.map(r => r.id === registro.id ? { ...r, fecha: nuevaFecha, hora: nuevaHora } : r));
-      setEditando(null);
-      alert('✅ Clase actualizada correctamente');
-    } catch (error) {
-      alert('❌ Error al editar la clase');
-      console.error(error);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Error al editar la clase');
     }
+
+    setRegistros(registros.map(registro =>
+      registro.id === editando.id
+        ? { 
+            ...registro, 
+            fecha: data.updatedData.fecha, 
+            hora: data.updatedData.hora 
+          }
+        : registro
+    ));
+
+    alert('✅ Clase actualizada correctamente');
+    setEditando(null);
+  } catch (error) {
+    alert('❌ Error al editar la clase: ' + error.message);
+    console.error('Error completo:', error);
   }
+}
 
   return (
     <div style={{
