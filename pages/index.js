@@ -4,6 +4,9 @@ import { Clock } from 'lucide-react';
 export default function Home() {
   const [registros, setRegistros] = useState([]);
   const [cargando, setCargando] = useState(false);
+  const [editando, setEditando] = useState(null);
+  const [nuevaFecha, setNuevaFecha] = useState('');
+  const [nuevaHora, setNuevaHora] = useState('');
 
   const estudiantes = [
     {
@@ -85,6 +88,37 @@ export default function Home() {
       alert('✅ Clase eliminada correctamente');
     } catch (error) {
       alert('❌ Error al eliminar la clase');
+      console.error(error);
+    }
+  }
+
+  function iniciarEdicion(registro) {
+    setEditando(registro.id);
+    setNuevaFecha(registro.fecha);
+    setNuevaHora(registro.hora);
+  }
+
+  async function guardarEdicion(registro) {
+    try {
+      const response = await fetch('/api/editar-clase', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: registro.id,
+          nuevaFecha,
+          nuevaHora
+        }),
+      });
+
+      if (!response.ok) throw new Error('Error al editar la clase');
+
+      setRegistros(registros.map(r => r.id === registro.id ? { ...r, fecha: nuevaFecha, hora: nuevaHora } : r));
+      setEditando(null);
+      alert('✅ Clase actualizada correctamente');
+    } catch (error) {
+      alert('❌ Error al editar la clase');
       console.error(error);
     }
   }
@@ -183,15 +217,58 @@ export default function Home() {
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
-                <div>
-                  <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>
-                    {registro.estudiante}
-                  </p>
-                  <p style={{ margin: '0', color: '#4a5568' }}>
-                    {registro.fecha} a las {registro.hora} - {registro.duracion} min ({registro.tarifa}€/hora)
-                  </p>
-                </div>
+                {editando === registro.id ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+                    <input
+                      type="date"
+                      value={nuevaFecha}
+                      onChange={(e) => setNuevaFecha(e.target.value)}
+                      style={{ padding: '5px', borderRadius: '5px', border: '1px solid #ccc' }}
+                    />
+                    <input
+                      type="time"
+                      value={nuevaHora}
+                      onChange={(e) => setNuevaHora(e.target.value)}
+                      style={{ padding: '5px', borderRadius: '5px', border: '1px solid #ccc' }}
+                    />
+                    <button
+                      onClick={() => guardarEdicion(registro)}
+                      style={{
+                        padding: '5px 10px',
+                        backgroundColor: '#48bb78',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      💾 Guardar
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>
+                      {registro.estudiante}
+                    </p>
+                    <p style={{ margin: '0', color: '#4a5568' }}>
+                      {registro.fecha} a las {registro.hora} - {registro.duracion} min ({registro.tarifa}€/hora)
+                    </p>
+                  </div>
+                )}
                 <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => iniciarEdicion(registro)}
+                    style={{
+                      padding: '5px 10px',
+                      backgroundColor: '#63b3ed',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ✏️ Editar
+                  </button>
                   <button
                     onClick={() => eliminarRegistro(registro)}
                     style={{
