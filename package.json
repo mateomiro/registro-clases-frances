@@ -17,7 +17,8 @@
     "clsx": "^2.0.0",
     "lucide-react": "^0.263.1",
     "tailwindcss": "^3.3.0",
-    "tailwindcss-animate": "^1.0.0"
+    "tailwindcss-animate": "^1.0.0",
+    "@/components/ui/card": "latest",
+    "@/components/ui/button": "latest"
   }
 }
-
