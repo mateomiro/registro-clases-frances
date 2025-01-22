@@ -93,51 +93,61 @@ export default function Home() {
   }
 
 function iniciarEdicion(registro) {
-  // Convertir la fecha de "DD/MM/YYYY" a "YYYY-MM-DD" para el input date
-  const [dia, mes, año] = registro.fecha.split('/');
-  const fechaFormateada = `${año}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+  console.log('Registro a editar:', registro);
   
-  setEditando({
-    ...registro,
-    fechaTemp: fechaFormateada,
-    horaTemp: registro.hora
-  });
-}
- async function guardarEdicion() {
+  // Convertir la fecha al formato correcto
   try {
-    // Convertir la fecha de YYYY-MM-DD a DD/MM/YYYY para mantener consistencia
+    const [dia, mes, año] = registro.fecha.split('/');
+    const fechaFormateada = `${año}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+    
+    console.log('Fecha formateada:', fechaFormateada);
+
+    setEditando({
+      id: registro.id,
+      estudiante: registro.estudiante,
+      fecha: registro.fecha,        // Mantener la fecha original
+      hora: registro.hora,          // Mantener la hora original
+      fechaTemp: fechaFormateada,   // Fecha para el input
+      horaTemp: registro.hora       // Hora para el input
+    });
+  } catch (error) {
+    console.error('Error al formatear fecha:', error);
+    alert('Error al iniciar la edición');
+  }
+}
+
+async function guardarEdicion() {
+  if (!editando) {
+    console.error('No hay datos de edición');
+    return;
+  }
+
+  try {
+    // Convertir la fecha de YYYY-MM-DD a DD/MM/YYYY
     const [año, mes, dia] = editando.fechaTemp.split('-');
     const fechaNuevaFormateada = `${dia}/${mes}/${año}`;
 
-    console.log('Datos originales:', {
+    const datosEdicion = {
       estudiante: editando.estudiante,
       fechaOriginal: editando.fecha,
-      horaOriginal: editando.hora
-    });
-
-    console.log('Datos nuevos:', {
+      horaOriginal: editando.hora,
       fechaNueva: fechaNuevaFormateada,
       horaNueva: editando.horaTemp
-    });
+    };
+
+    console.log('Enviando datos de edición:', datosEdicion);
 
     const response = await fetch('/api/editar-clase', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        estudiante: editando.estudiante,
-        fechaOriginal: editando.fecha,
-        horaOriginal: editando.hora,
-        fechaNueva: fechaNuevaFormateada,
-        horaNueva: editando.horaTemp
-      }),
+      body: JSON.stringify(datosEdicion),
     });
 
     const data = await response.json();
     
     if (!response.ok) {
-      console.error('Respuesta del servidor:', data);
       throw new Error(data.error || 'Error al editar la clase');
     }
 
@@ -154,8 +164,8 @@ function iniciarEdicion(registro) {
     alert('✅ Clase actualizada correctamente');
     setEditando(null);
   } catch (error) {
+    console.error('Error al guardar edición:', error);
     alert('❌ Error al editar la clase: ' + error.message);
-    console.error('Error completo:', error);
   }
 }
 
@@ -291,35 +301,86 @@ function iniciarEdicion(registro) {
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
-                {editando === registro.id ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-                    <input
-                      type="date"
-                      value={nuevaFecha}
-                      onChange={(e) => setNuevaFecha(e.target.value)}
-                      style={{ padding: '5px', borderRadius: '5px', border: '1px solid #ccc' }}
-                    />
-                    <input
-                      type="time"
-                      value={nuevaHora}
-                      onChange={(e) => setNuevaHora(e.target.value)}
-                      style={{ padding: '5px', borderRadius: '5px', border: '1px solid #ccc' }}
-                    />
-                    <button
-                      onClick={() => guardarEdicion(registro)}
-                      style={{
-                        padding: '5px 10px',
-                        backgroundColor: '#48bb78',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      💾 Guardar
-                    </button>
-                  </div>
-                ) : (
+               {editando?.id === registro.id ? (
+  <div style={{ width: '100%' }}>
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: '10px',
+      marginBottom: '10px'
+    }}>
+      <input
+        type="date"
+        value={editando.fechaTemp || ''}
+        onChange={(e) => {
+          console.log('Nueva fecha:', e.target.value);
+          setEditando({
+            ...editando,
+            fechaTemp: e.target.value
+          });
+        }}
+        style={{
+          padding: '5px',
+          border: '1px solid #e2e8f0',
+          borderRadius: '5px',
+          width: '100%'
+        }}
+      />
+      <input
+        type="time"
+        value={editando.horaTemp || ''}
+        onChange={(e) => {
+          console.log('Nueva hora:', e.target.value);
+          setEditando({
+            ...editando,
+            horaTemp: e.target.value
+          });
+        }}
+        style={{
+          padding: '5px',
+          border: '1px solid #e2e8f0',
+          borderRadius: '5px',
+          width: '100%'
+        }}
+      />
+    </div>
+    <div style={{
+      display: 'flex',
+      gap: '10px',
+      justifyContent: 'flex-end'
+    }}>
+      <button
+        onClick={() => setEditando(null)}
+        style={{
+          padding: '5px 10px',
+          backgroundColor: '#cbd5e0',
+          color: 'white',
+          border: 'none',
+          borderRadius: '5px',
+          cursor: 'pointer'
+        }}
+      >
+        ❌
+      </button>
+      <button
+        onClick={() => {
+          console.log('Estado actual de editando:', editando);
+          guardarEdicion();
+        }}
+        style={{
+          padding: '5px 10px',
+          backgroundColor: '#48bb78',
+          color: 'white',
+          border: 'none',
+          borderRadius: '5px',
+          cursor: 'pointer'
+        }}
+      >
+        ✅
+      </button>
+    </div>
+  </div>
+) : (
                   <div>
                     <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>
                       {registro.estudiante}
