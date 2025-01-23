@@ -32,6 +32,19 @@ export default async function handler(req, res) {
 
     // Encontrar la fila que coincida exactamente
     const rowIndex = rows.findIndex(row => {
+      console.log('Comparando:', {
+        actual: {
+          estudiante: row[0],
+          fecha: row[1],
+          hora: row[2]
+        },
+        buscado: {
+          estudiante,
+          fechaOriginal,
+          horaOriginal
+        }
+      });
+      
       return row[0] === estudiante && 
              row[1] === fechaOriginal && 
              row[2] === horaOriginal;
