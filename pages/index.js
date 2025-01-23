@@ -1,4 +1,4 @@
-[23:26, 22/1/2025] Mateo Miro: import { google } from 'googleapis';
+import { google } from 'googleapis';
 
 export default async function handler(req, res) {
   if (req.method !== 'PUT') {
@@ -70,11 +70,6 @@ export default async function handler(req, res) {
   }
 }
 
-
-Ahora te pasaré el código actualizado para el pages/index.js. ¿Quieres que lo dividamos en partes para que sea más fácil de copiar, o prefieres que te lo envíe todo de una vez?
-[23:28, 22/1/2025] Mateo Miro: Este es el código completo y correcto para pages/index.js. Te aseguro que está limpio y funcionará con tu estructura actual de Google Sheets:
-
-javascript
 import React, { useState } from 'react';
 import { Clock } from 'lucide-react';
 
@@ -192,34 +187,60 @@ export default function Home() {
   }
 
   async function guardarEdicion(registro) {
-  try {
-    const [dia, mes, año] = nuevaFecha.split('/');
-    const fechaNuevaFormateada = `${año}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`; // Asegura que sea "yyyy-MM-dd"
+    try {
+      if (!editando || !registro) {
+        throw new Error('Datos de edición incompletos');
+      }
 
-    const response = await fetch('/api/editar-clase', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+      console.log('Enviando edición:', {
         estudiante: registro.estudiante,
         fechaOriginal: registro.fecha,
         horaOriginal: registro.hora,
         fechaNueva: fechaNuevaFormateada,
-        horaNueva: nuevaHora,
-      }),
-    });
+        horaNueva: editando.horaTemp,
+      });
 
-    if (!response.ok) throw new Error('Error al editar la clase');
+      const fechaInput = editando.fechaTemp;
+      const [año, mes, dia] = fechaInput.split('-');
+      const fechaNuevaFormateada = `${parseInt(dia)}/${parseInt(mes)}/${año}`;
 
-    setRegistros(registros.map(r => r.id === registro.id ? { ...r, fecha: fechaNuevaFormateada, hora: nuevaHora } : r));
-    setEditando(null);
-    alert('✅ Clase actualizada correctamente');
-  } catch (error) {
-    alert('❌ Error al editar la clase');
-    console.error(error);
+      const response = await fetch('/api/editar-clase', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          estudiante: registro.estudiante,
+          fechaOriginal: registro.fecha,
+          horaOriginal: registro.hora,
+          fechaNueva: fechaNuevaFormateada,
+          horaNueva: editando.horaTemp,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al editar la clase');
+      }
+
+      setRegistros(registros.map(r => 
+        r.id === registro.id 
+          ? { 
+              ...r, 
+              fecha: fechaNuevaFormateada, 
+              hora: editando.horaTemp 
+            } 
+          : r
+      ));
+      
+      setEditando(null);
+      alert('✅ Clase actualizada correctamente');
+    } catch (error) {
+      console.error('Error completo:', error);
+      alert('❌ Error al editar la clase: ' + error.message);
+    }
   }
-}
   
   return (
     <div style={{
